@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Laporan SLA Incoming - Pos Indonesia</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Local Vendor Scripts for Exporting PNG -->
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/html-to-image.min.js"></script>
+</head>
+<body>
+
+  <!-- App Main Header Toolbar -->
+  <header class="app-header">
+    <div class="app-title-group">
+      <div class="brand-badge">POS IND</div>
+      <div class="app-title">
+        <h1>Generator Laporan SLA Incoming</h1>
+        <p>Sistem Statik Visualisasi Grafik & Export Gambar Report Performance</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-parse" class="btn btn-primary">
+        <i class="fas fa-sync-alt"></i> Process & Render Data
+      </button>
+      <button id="btn-export-png" class="btn btn-success">
+        <i class="fas fa-file-image"></i> Download / Export Image (PNG)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Work Container -->
+  <main class="work-container">
+    
+    <!-- Left Editor & Data Input Drawer -->
+    <aside class="editor-panel">
+      <div class="editor-title">
+        <span><i class="fas fa-edit"></i> Input Data Report</span>
+      </div>
+
+      <div class="editor-tabs">
+        <button class="tab-btn active" data-tab="tab-raw">Raw Text Paste</button>
+        <button class="tab-btn" data-tab="tab-manual">Form Header</button>
+      </div>
+
+      <!-- Tab 1: Raw Text Input -->
+      <div id="tab-raw" class="tab-content">
+        <p style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px;">
+          Paste raw data dokumen pesan (Dokumen 1, 2, 3) seperti contoh untuk mengupdate dashboard secara otomatis:
+        </p>
+        <textarea id="raw-data-textarea" class="raw-input-box" placeholder="Paste data mentah di sini..."></textarea>
+      </div>
+
+      <!-- Tab 2: Manual Form Controls -->
+      <div id="tab-manual" class="tab-content" style="display: none;">
+        <div class="form-group">
+          <label>Judul Utama Dashboard</label>
+          <input type="text" id="input-title" class="form-input" value="DASHBOARD CAPAIAN KINERJA SLA INCOMING">
+        </div>
+        <div class="form-group">
+          <label>Nama KCU / Kantor</label>
+          <input type="text" id="input-kcu" class="form-input" value="KCU BOGOR 16000">
+        </div>
+        <div class="form-group">
+          <label>Tanggal & Waktu</label>
+          <input type="text" id="input-datetime" class="form-input" value="11 SEPTEMBER 2026 PKL 19.47 WIB">
+        </div>
+        <div class="form-group">
+          <label>Target SLA All Product (%)</label>
+          <input type="number" id="input-target-all" class="form-input" value="90">
+        </div>
+        <div class="form-group">
+          <label>Target SLA COD Shopee (%)</label>
+          <input type="number" id="input-target-shopee" class="form-input" value="95">
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Live Dashboard Display (Target Export Image Canvas) -->
+    <section class="dashboard-viewport">
+      
+      <div id="dashboard-export-container">
+        
+        <!-- Dashboard Header -->
+        <header class="dash-header">
+          <div class="header-left">
+            <div class="pos-logo-container">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWMAAAE2CAYAAAC0gfOlAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAADZnSURBVHja7J1/bBNX2u+fIN73vrRp8S7lSjSUuLoSdZKV8BLYNEFsBio27pUQLhu8f/BSTBJEtq/UTEDqD5q8cTZZ7rYSyVDplqD8wEDR1aYpNeXqxWxVOgFBmg3pGmmdBHSl2oGA9AJbh7hw79vV6/tHxtSYsT1jj+0z9vcjjQj5MT7znHO+85znnPOcglAoRABki7J1uw3eS71mIjJGXST9W5zEbWeJyCN9HYj4WrTY9gfcgwc8sHzmsdV3coP9LUREXET9huvaQESrUri9n4h80tc+6QrXfWQbYJaC7sOfOtBMiC6PTYjhr2/M3PWNuAUfrKItFtt+c+lLxeafmYzmMlOxuaLcVJ2tsszcvuefuOb3eKd8nstjE6J3yu/xXuoNoJZSp9LCG8tMxeafmYrNlWtLueXPLzUWLVtSzEDRrkoi7SEiMUKo2RDjEFzjmASDD2e91/we75Tfc2Pm333ea37PYH+LCMso75SWjeXWql+UcZVrSrjCwkWLWS7v5PXpqyNjk+LlsQlxZGxChDgrr+fKtSXcq6+steqhnmUEWpQuF8RYZ4yOTw2PjE2I7vNXXBjyPun92rZU22s2rrEy4g2lVM/uL8dc7vPjLoyU5F+0Nmu1vWTlilU59GinJVF2ZdprhhhrMNw9d/6Kq/fEWSFfO2ylhTf+xvpL+7Yt1Xa9C3A8Yf6ja9h57vwVV756zGXrdhtsW35pz0EBlmNWEmSBMhVvDgHN+PrKpNjc0mMPhUKUD9e2ug7uT1+Nu/KpjufmHgQ++fyC8+WaJmO+1HPNtnfNn3x+wZnHXVsMhUJp79cQ4zRw89ZdXy6LcnNLj33imt+T7/X8yecXnNvqOrhcftl+fWVSRI9+hC+dogwxTrMo51Jn3VbXwd28ddeHmn1yRJRLnnLNtnfNEOGEnjIHMdYhf/pq3FVa1WBA58x9T1nP9Vxa1WDI83CEWoRQKKRZfUOMMxhrrG/qsuqtc/Z/7BZQe+rq2fH+cV5vQlzf1GWdm3sQQA0mFbrQxEuGGGfBe0JIAqELeMM5hwNirEMmrvk9rA5n4Q1r6yWzPJFbs+1dMyZiNcWZStgCYgxBfnS9XNNkROdMz2iItbqu2fauGWGJtOBJVpAhxhDkR2EJdM701jUrYQsIMZuCDDGGIJM0lAYZCFvUbHvXDCGGIEOMGRbkbHVOxIczL8jZWlUDIc44LoixDsnGKgvMomePTE/slVY1GCDEWUHxKguIMUNk0mOCEOeXIGNiNqsoWocMMWZsCJuJSR5pUwJggEzEkBGKyjq+kIL4McSYMaQsaJisy6MXcDoFWcqNArKPkKiukM+YQRr47tf6hGbNTx2w2Pab3YMH/gILs5cT+1e175jTkSd55vY9X67mmNYhP4+XGxlizGjnLFq2xKh1YvDRcx/6dHYkTt4wOj41XFFu4rS8597WI/aujj1HYV1mGKYfD2N9ggWwD3sULVtSvLf1iF3Lew58uM8FIWaXinJTtdBzyqHlPfe9UeuAZZmiGmKsQ7TsSO0fnOCzeRIzUAbfuLXNYttv1sorRniCzWqO9QOEKRhmb+uRXV0de5yp3KPSwhtH3MK3sKY+mLw+fbVk5QqzBvfx5ME5dXrlRSLyyXnGw7ANm/zGWm1P9R7C7xudsKR+KFm5YlWq4QqLbb8ZQqw/7xhhCoapKDdVV1p4YypDVYQndNhTG7e2pVLvti2pv8RBWrFCjHWIZWO5NZm/K1u32/C7t18XYEF98rt3kq+7mo1rrLAg0xQTkVlOjH2wDbvYkgxV7N7xKo/VE/plE7d6i62+k1P7d5UW3oiJO13wRL9eCDFmm5KVK1aVrdttULMhQFpTzMN6+kZaUaNKkJMdSWWAYZrf8BAgIlH6XoDibIJQiFG6Ir82SJ6nmYhYdUg4OTEWiagti4U6luUXAidVHrMTHpVrSzkicuWhVxw9uSyqaNwsd0RFVJSbqm31ndxgf4uo+EVcYjQz9AjHpHbrSuNn+BLoh5HmY7RWml/nywqr5MTYk+VCORN0skwLs1UaQjDTkatUiLEOveKrUhsMX4k6V7Kek1n6l2P5xZuqd1z2UrGZkTq1MjLq9hGRIF1G6d8tDOnNI+1bIA0VrmJQ+Mjz4iVPuZmIZlkoVJlJeQer2bjGyrhXPCt5TK8R0U8kkbRLnURMQwf2SfcVpLo1E1GB9PmHWKnjeN6xmpUVDCxpuyqJjI9Bc/qkl8QuFkMVCxQM//IVQeq4V1nokCo9KVZFuFnyTuySpx/IYnlcES/e14jh9fb7/uXXiuq0bN1uAwPF5bNcr0pH4+0MlMMoJ8ZOaG/MN6mdBe9JyTZZW30nx+hM+qGIISKLHdUleSmvsegpWzYoW6qmZgSVxheuXhw7BxH5WRRjDwMFYxWPJCJZ5dlnnkro9diszC32n5UETg/eUliUjcRY2K6wcNFirRNHpbGv6IlsO6GyYkwsCA7jIYusIk3iaeJBZVCIOUrvTHo6CEjlPs1SoV59Za0V3TAtL99sUhxLjJ3E+GRGljso0zk8Gvhu1ibu7Dr0lCLr286Sh7yJW72FkZhwPKppPgavp1EvMyyIaoDwjmMjZvPDy0zx149aXmHKKz6kQ49YTpCtLDkoOtnmbIdUqMIgJ8bh4Ti8YwbfoolixpVrEocxMsQszU+O5AI+lhyUql8wU8fxcJBM3gWGyfaI1xxLjAMUJ/lxnhNgtWAW234zQ6soBNLHZJ0acWFicpuhF248FhPRX2g+7GkmoBi5rG1OQo5jOURWC1a5poSlTirkYN07WShE0bIlxfGWOKrZNp0BdkqiHKAf13RzpK+YckZZGOP7dmlYjqxfOoChfASnc8wrjhTjNhYKUjq/3dmjI9stpvntx5FbkGfp8a3vHno8gVAm4bP8gvAkEmOfJMifQerYYPnzS406GL66ctT8PppfWZH1nBZS3Dimpy4d28R67o3FNL/yQm5naVioIwU6kMYXEDMvtgUJOlY7ASa4eeuOT9YrXrfbwFC8WMzhKmDiRZMoEdDNW3d9OrdzWKibpNHIVzQf7gjR43lGHDQf9jDmSgNLdNKHg+aTugBWQxQmJrJ0Ec1Pcvly2NRMvGgSeb2X/+zN5RdisYxQfysJtUeqIwf9GJ/WlVAvVPA7dunfnZA+BsX4JWbE2JPjpmZG5Cy2/Wb34AFZe49cmRTztCuEX1JyoY9h+jHU4aPH49S6EmMI8jwci4V6oei/svL29+RBG2Aibhxvzbl78IAnGHw4iyO3HiMs0FtiCHVYoMVsirSaA0ntxE4e0GxgQJgi78XYx0IhEuUpcX91xQX9VSXUO+nHsMd3Ult2SpqXMWdH7enQTiL6OeVnhresit79uQcBxu0TyIM2oIsXjvtLiHGKrJIE+ijNx6R99GN+c2bEONwgzTSffyCf4LL54d4pn6wQqEk8nw9eYz68cCoTeMZ9QrNr5vY9pMTVjmKanzT8S4Qwa+4xL0ihUfJEtIHyY7eegdg6zBBDeHjGcfnk9LATTTKtwvwtzceYrdkW4zCi5DHmuijz2S7A5bEJMfp7OkipCLJE74mzQjD4EEm/0ks1zW+M82khygs0KlRYlH9OOjjkUSVmFsT4xsyTi/kZW2MMMoSS0JT3Um+g7+OzAqyVMW/5M0kHk+6TCzQulId+3Ov98xzwlo2SgbO+TGjELbAcBvDlSacT9eYdI3accU/5L5RkCtkFaSyYh/S9PdbKihCPjk8hix5QjfdSb6C55bAdlsg4bZJ2GFgRYz1iljx7nzTsYCLng3fK70HVgGQY7G8RB06eOwRLZMVL9pGKsMXCJD/ISMqWdij5HXOWjGWW3lwG6WszMZoy9PLYhFi3vQbNGyRF3fYafvL6NKeDbG65RjjR/i5SkBNbqRgbpWG7lbRf4tWNOovPiMxKCgDUULurgxs62ipCkLPCUenfuIKcKExhlG7wrSSaWGubYb4QvzntvdQbgCVAKngv9QZqd3Vwk9enr8IaWRNke7JizNP8JByytWWRs1+OuWAFAEHOCQSKE5aNJcZOyRNG5qcsc+488gwA7QV56MxF5CnPPItp/pACg1IxdsIbZoOhMxePIUTBFMacEeTN6+3tH5xoxi69jFNMMWLHC2TcaAgxIwy6dJNfIF/mEpgQY60EtO2tHcKm2nfNWMeecbaQTOKxglAoFP6ao/l8noABZm7f8xctW6Kk84cYKXJBHlQLE31kdHxquKLcxGl5T1t9J9f+9usCVltkDH/0yz3SM3bCPuxw8KMhB6zAHIacHYX1t4glK1eY97Ye2QVPOSMUU9TqirAY24mR3WZg3ivu6tij6OXIUMzPnAdVw8QzpvOgga6OPc6KchNnse3/+dCZi8cQU04rsmIML4wh1OQT8F5jZqu0IQ+qholnjHXQgJa4Bw94ajevtxcWLjI08N2vQZjTQnXkC36h9B94xYzwhfjN6cH+FpEFLykJr1HM8ephwjOevf99Ruu8T2h20fySLLLY9psr15RwVb8o4yrXlHA4+FQT75gPi7EV9mCDYPDhLP/eYbv3Uq8qL2kTt3oLA8U3IkyRIc84i6Mh9+ABD81vBhOIiCotvPGFoueMVWtLueVFS40vPL/UWPZSsRkirRhrpBibYQ824Ft67GrXFU/P3PFBqDL2smFCYOQOGsgWUp5tn9yoyGLbb372macM4dOsK9eWcs8+85QBKzYeo1jqO56FlB+xPuYZOnPxmDQcVMXNW8yIca6vNWbiZRMMPpxl/KCBaC+a5IS6bN1uQ5mp2Lz8+aXGFUVLjXnuVVuJyFMQCoU8NH80NcgSk9enr5asXJFKZ2dlrfEGyt24sZMY2BCVjjXGLJJnXvUwEXELIcTZF+LaXR2cmjhxDDFnoR6tOSzGTAjgyNiEWFFuyvl+kWdetZko+eTyQKMhZ3MSceInO+ikyJAY8zkqxEysOPqrglNfbPWdXNijzAaXxyZENSuC1CL1F1GNV738+aXGomVLWF01tpiIjBDjLDFz+56/vumgNcIDSKnx122vaWLgsR5NRuRYddlZKYiSgwaq1pZyfOPWtiwXNWsjpFheddm63YbKtaVc1dpSrmbjGitj4gwxznJoIpCpDppBeJbES4tOQowkz5q8Pn0VWfxS9qhd0sXvbT1i3/dGrYMRUTbiQNIM84X4zWkthTjcyBhKGL6TcmuZm8COVzwpogdpR1fHHuevat8xM9J3IMaZpP2DE82buNXWdHg3jCWhd+ZQeGILK4Vxn8epL+nwluve7LKyUBaIcQYYHZ8attj2/7ztrR1C+joqU2K8KgcE2cySVxwMPpxN56RYPjPiFnwsZKqDGKe5A+1tPbKrotzEaTFRF1eMBw94Zm7f8zP0+Dt1LMhmmp/8YWaZlPsr5S/bbO/KLDMZzboTZAbmXSDGaRJhoedUe0XNm0alqTC14JPTzJ0MEhZkg46qz8qaEBMR9Z04q9hLz/auzNKXis1QAYhxVpm5fc/f/sGJ5oqaN41841ZHpme+/+i6wKInupPml7pxjFefkeZn2T9jTYhnbt/zqxlZZTuTX9GyJcW2+k5OT313edFSY9YLEQIpMTf3IPDJ5xec9U1d1lAoRNm+/vTVuIthc4mhUMjOgp0iLi4UCjlZbmOO94/zSTxXVpm45vcwVs9xr5u37vqybDI7xDgJbt666+v/2C2wIsCR17a6Dk4HJgyEQiGXJMzmDNvIKH2uUyoH8y/70qoGgw7FJfTJ5xecyZQ905f0sss2XEEo4kRSID9EvHnrjm9kbEL865TfMzI2IbK+8H7m9j0fw1s/YzEshTMCEf8SJbeTyyzFqQ0RX5ulS1e5C4bOXDxWu3m9Xe3ffSF+42Ihz/XM7Xv+gx8NOc6dv+Jisd+0f3CCb3trR3e2y1G2bvdPsi7GQ2cuHrvJSE7e2fvfB8KJu2/M3PXpJVVhNHtbj9i7OvYcxatU/1Ra+BeTaYdCzykHA1uio18Qpy//2St6r/k93im/JxviXGnhjWWmYjNLW6KDwYezhYWLDFkXY1t95wasn4R3DLTziqV+xQ32t3zF+jNOXp++Gp5wvHHrji+eYzY9c8cXuVIkUTKkcDY3IiKW029+IX5zehO32orcFDlK2/vH+T6h+TNYQp8Egw9nD/7PTx21m9cn9feD/S2i5HExHZaJFMiKclN1Ptb15T97xU3caixty1X6hGYXC7uKQJL19/FZIdUw2cgV5LLQA+F6ghjnuHcMK+iPmdv3/L0qNnnE4uyXyGWhh7oOryGHGOcw7sEDnoGT5w7BEvp7iWoxudXVsccZDD6chUXZJXLXLMQ4xzn40ZCDsZwVIA5fiN+cTuZg2pgv5K+YSiAFoojcNQsxznG8l3oDzS2H7bCEPoas/Hva1tXB//mpA5Zl98UbOS8AMc4DBvtbRKHnVDsswTbNLYftWq+9HXELvqEzF4/BuuzRe+LfhMj/Q4zzBL5xqwOrK9hF6DnVnq719vCO2WN0fGo4ur4hxnlE3ZsHrQwdzwQkhs5cPMY3bk2bYI64BR8mctlCbqUTxDiPmI8f99gxw84Ok9enr7b9If1LEA9+NORAvbPBwMlzh+RSokKM8wz34AFPbV0Hh47JhhBrfThtvBcx39Jjh9WzSzD4cPbgR0OyoyCIMQQZ5LgQh+kTml0IV2SXuqaDMQ8khhhDkCHIeSDEj8Rgew2PidzskGiSFmIMQYYg54kQPxJkTORmHCWTtBBjCLKntq6Dwy699DM6PjWcbSEmmo8f1+7q4CDIGXwBK0iFCjEG5B484PlV7TtmDF/Tx8DJc4cqyk0cK6ddQJAzOxJS8rsQY/Coc1aUmzhM8GhLMPhwtoHvfq1uew3PYp1DkNMbmihZucKs9AUMMQaPUbe9hrfVd25A2EKbsMSm2nfNWib+SYcgl6xcYcaWaW0Rek61qz6lJdtHokqnGRMutq7SqgbDJ59fcIZAUic6SycO66rOm1t67HNzDwKowdTqPtlT4yHGuOJe2+o6OBaOfdcLX1+ZFF+uaTLqtb5frmkyfn1lUkRNqudPX427SqsaDMnaHmKMS9HleP84D68pNjdv3fXlUluGl6yu7pP1hiHGuJIOXXQf/tSBTvp4R2xu6bGjvvMzJNF9+FNHKt4wxBgXOmmKTFzze3JVhFHfmRVhiDEuzYazE9f8nnzpiJ98fsGZz222uaXHnq8x5XSJMMQYl+YTP/0fu4VcnOybuOb3ON4/zqerE+q1vrsPf+rIh8ndP3017srEKKggFAqFsrkez1bfuSFdJxyA7GCx7TfbtlTbK9eWcCUrV6zS4zN8IX5z+vKfvaL7/Lgr8pwy8CSVFt5o2Vhutbyy1lpRbqrOhWf6Qvzm9Nkvx1znzl9xZWrXJMQYpL2jVq4t4ap+UcqVvVRsZlWcR8enhkfGJsTLYxMi2mPKfZqrWlvKlZmM5so1JVxh4aLFetigk+36L8iyFoM8o2zdbkOZqdhctbaUW1601PjC80uNZS8VmzPVYSevT1+9P/cgMDI2IU7P3PFNXPN75E5dANq+kF8oes6YrTqPrv+bt+76vFM+z1+n/J6bt+74WKl/iDFgyqMiIlr+/FLjiqKlRiKiZ5952lBmKjYrvceNW3d8N2fuPAorXB6bEImIvFN+DytJesCTQk1EVLW2lAt/X229ExHdn3sQ8E75Hgnr9Mwd381b821BD6MdiDEAADAAEgUBAADEGAAAAMQYAAAgxgAAACDGAAAAMQYAAAAxBgAAiDEAAACIMQAAMEjBdxv+W1a34BU8Vdi3+H97dqv4Eya2DO5tPbKrq2OPU68VPzo+JWYzw5bQc6qdb9zq0Et5s83M7Xv+8Nbe8Jbv8HZfbPXODRbCBMnxu7dfFyotvIj0iiATFC1bUly0bEkxEZHcSykYfDjrveb3eKf8nr9O+TwjY5NomxDj/KCwcNHigQ/3uojIDGsAFtpjRbmpOlKog8GHsyNXJsWzX465IM7sg5hxCpSsXLFq4OQ5AZYArAr0Jm71lq6OPUdH3MK3k9enPULPKUelhTfCOhDjnKNue01TA99thSWAHpwHvnFrW1iY2z84wZet222AZSDGOYPQ2eiEtwH0Jsxtb+3o9l7q/W7ozEW0XxbEuOCpwj6YIfXhoBQ/BkB31G5ev3PELXw7Oj4lhhP8gyyIcehBcDfMoI2ngfgx0DMV5abqwf6Wr0bHp0SLbb8ZFsmwGBMRFTz19A8wRerUba9pgmcBckGU3YMH/jJ05qITMeUMizH94z9dhSm0YeDQPhcaMMgFajev3zl67kNf+wcneFgjQ2IcCt7/XzCFNszHj/e5YAmQK+257a0d3aPjUyIm+TLhGf/9hy5a+A84mVTDYZ7Qc8oBS4BcatNfDP0Pz97WI3ZYI51iTEQFTz/zFcyhHXzj1jbEj0GuecldHXuODp256IQ10ijGodm/vQJzaAvixyAXqd28fufk9WkP2naaxJiIqOAnz12DSbT1JBA/BrlIycoVq4aOtmIJXLrEOBT4WwdMoi0V5aZqzEaDnBXkAQhyWsSYQv95smDxT8/DLNrS9taObjRYkKujPwhyOsSY5mPH2ASiPf2IHwMIMlAjxkREof/4j3dgGm0pWrakWPj9b52wBMhVQe7ubMSOPa3FmP7+Q1fBM4tPwTzasolbvQXxY5CrhCf1YAktxZiIQnOzv8bqCu1B/BjkvCBjHbK2YkxEFPrurqnA8NN7MJO2IH4Mcpnazet3YqeexmJMRBQK/O05CLK2FC1bUtz+zusCLAFyFenAXiMsoaEYQ5DhPQCglsLCRYuF3zc6YQmNxfiRICOGrLn3gPgxyFWw4SlNYkwkxZCxykJT7wHLgUAus++NWgfadxrEmGh+lQUt/Id92BiiDSUrV6xC/BjkssOB9p0mMSYior//0BV68P0/Yuu0NiB+DHK9fWMyLzELU/nj0OzfXqGCBdsLDD9tDX139yWYM3mk2WdxxC34YA0muUpEgSx9tpmIFuvZeNJkHodmlCYxnlfk/zwZ+u7uSSpYsL3gWUNd6Pu5DfT3HwpgWvXDuYEP97qkjgfYgycikYFymInIQERG6eL0INYV5aZqi22/2T14wIOmJM8Cze4U+s+Todm/vUJ//2FBwX/5p/cLfvLcNRzlpI6SlStWDZw8J8ASIA4e6aXgJCKHJMYGInqRiJqJaJjVgjfseJVH9WVCjCN1+f/933dC39010d9/WEAFC/654KnCvoKfPHetwPDTewVPPf0DJv9iU7e9pqmB77bCEkAlPiISJHF+kYhOs1ZAxI4ThCkM5/9Puj/jpHQBhQidjc5KC29G/BikIMxW6XISQyGM31h/aZc8epAJzxikRkT8GIBUcEme8iwrBdq2pdqOaoEY6wrEj4FGeFgS5KJlS4pxaro8CVdTWGz7zZaNa6yVa0vTYsC294/zmGGVp257TZOtvtM12N8iwhogRUF2EFE3C4WxWavtxMbKFH2I8d7WI/Z9b9Q63IMHitNZgGefecqAaojNwHy6TaP3Um8A1gApINB8DLk62wWxbFhjRXU8yRNhirJ1uw2j41NiV8eeo0XLlhTDRNllPn68zwVLAA1wsNKmkSArgRhbbPvNo+c+9FWUm6phGnaoKDdVCz2nHLAESBGRiPwsFMSyEd5xTDEuW7fbMDTQKhYWLloMs7AH37i1DRMfQAMEFgqRrjmonBDjgQ/3uSDEbDOA45qANt4xE6M9VIWMGO9tPWKHcdgH8WOgAR5iZJkbRnoyYrzvjVoHTKEPcHoCyBXvuOylYjOqIkKMG/huK1ZN6It9b9Q6sMcfpOgdZ1+MS4wQ40gx7hOaMVTQGVoc9jgyNiHCkhDjbPLC80vhUESKMSF/ri6pKDdVI7sbSBIfK20YVfG4GBtgBn0i4DBToGPPmGh+SS2q40cxXgUzJGZ0fGpY6DnV/oX4DTN5YufDFb91onaAXikzYRIvUoyBAu7PPQjwjVsdm7jV1snr01dZKdcmbvWWZJYIXUbMON8ZhgkgxrokMqFR2/vHeZbK1t35W4QrgC6pwk48iHEqDPa3iAMnzx1ipTxFy5YUY604ABDjvOTgR0OOmdv3/KyUp257TRMyYQEVBGACiLEuid4t5L3UG2huOWxnqYzdncrXHnun/B7Ual7DRP2XmbDxA2KsErkkSoP9LSJLqytKVq5YpTTVJpLVAxbA4RIQY83g3ztsDwYfMnPgY8M/v8pjqzQAEOO8w3upN8C39NhZ8uBT3SoNAIAYM02sCbI+odk1Oj7FzLrNinJT9d7WIwlfECytl04EcmkAiDF4RLz4Fv9eD1Phit+9/bqQaO3x/bkHAb3Yfvb+9wG0QAAxBok9N7fgO/jRkIOV8uTaVmnvNaz+ABBjoJC2t3YILIUrkt0qzSKD/S0iWhiAGAMiUnYygZ62St+4dcenJ/uztIwQAIhxFln87NOGRL/jHjzgEXpOtbNS5nhbpW/O6EuMz3455kIr1AwjC4XAxCzEOK3wjVsdLK1UyJWt0ufOX4EY55gYA4hx2mEvXKH/tcfeS70BhCoAxBjQ8iLlZ3axltlNbqv0tM7CFEREvSf+TUBLzB302AYhxgyg9gBF1jK7RW+VvnlLfx1hsL9F1NNmFYYxs1AIPbZBiLFOh9UsZXbLla3SrIWAdMpiFgpxY+YuxBhinDlPjqU4p9Kt0qzblKX13DrEyEpBRtwCxBhirJ7lKsMUYVjL7Pa7t18XRsenxPa3XxfgHUOMswXCTRDjpClatqQ4mb9jMbNbRbmpumTlCt2eDM7aem6dwbFQiJu3EKKAGGeBPqHZNXTm4jFYQjv4xq0OhCv06xl7p3weVAXEODtD6z8c5zE005a6Nw9aWQoBwTNWzl9x9BfEOGuewKXeQHMLW6k2c8GmtXUdHGyqyisuZqEg2AoNMc4q7sEDHpbix7li09q6Dg6W0I9XPHP7nh/nMEKMs06f0OxiaXdergiyxbb/5/CQE8KEIzByBV4xxJgR6rbXIH6cJg8ZghwTIxFVM1FXXyLpE8SYIWp3QTjSIcibat8140Uni4OVgiBeDDFmCu+l3kBd00ErLKFxR3cLvpKVK8wIBT0GR0Q7WSjIF+I3pxEvhhgzx2B/i4jNC+mhbnsNb6vv3AAvmQxE5GSlMDgkAGLMLHzjVgfy9KbvZVeycoV5b+uRXXkaEjIQkUiMLGcjwiEBEGPWBfm9w3aW0m3mGl0de5yFhYsMe1uP7MojO4eFmJlt70NnLh5DiAJizDTeS72BesSPMyLKRcuWGG31nRtyfDRiJyIfS0JMRDToGnaiFUKMmcc9eMCzt/XILlgiA6LQ3yLm4KkhxggRPkqM5CwOM3l9+upgf4uI1gcx1o3nhoRCQCGcJL4CEXmI6FtJhItZLGzvibMCqiw2C2EC9mj7w3G+7KVis55TXGaDSgtvfKHoOePy55caVyg4r9BmrTaquL2dsruV2Eg/Zlur1lvdzNy+5+/q2ONEK4UY6wrvpd6AxbbfPjTQKhYWLloMi8SmbN1uw+4dr/LbtlTbR9xCOj3CnbB28hz8aMjR1bEHhogDwhSM4h484PlXnGYRl/YPTvCj5z708Y1b25JN/A/Sz+j41DC8Yoixrunq2OPELjJ5b/gL8RtX21s7ujFy0IdXDCtAjHUPEgo9ydDRVnETt3oLLKGDujpz8RhWUECMc0eQ3+zCaRYSAyfPCZjY1AfB4MPZtj8g1AYxziFG3IIPCYWIbPWdXN32mia0CH3At/TYsdsOYpxzIKEQ0b43ah1oCboZwRzqE5pdsATEODc9jTw+Ddli22+uKDdVoxWwz+T16auYtIMY5zx1bx605mNCIcvGNVbUPvsEgw9n697ssiI8ATHOefI1oVDl2lIOtc8+tXUd3Ihb8MESEOO8wD14wNP+wYlmWAKwxN7WI7vcgwc8sATEOK9oe2uHgIT0gCUhxi47iHHewr932I4NIQBCDDEGWcZ7qTfQ3NJjx4YQACGGGIMsg4RCIBsEgw9nG/ju1yDEEGMQARLSg0wyc/uev7aug8OmDogxkKF283rEj0Ha+UL85vSvat8xY9UExBjEAQmFQLoIBh/Otn9wonkTtxobOiDGIBEjbsHHt/TYYQmgJaPjU8Obat81t721Q4A1IMZAIX1CsyvfEwoB7bzhva1HdlWUm7CrDmIMkiGfEwoBbRB6TrVX1LxpxGoJiDFIkbo3DyJ+DFQzdObisUoL/yLfuNWB2DDEGGiA91JvoLaug4MlQCKCwYezQs+p9koL/2Lt5vV2hCQgxkBjkFAIxGPy+vTVva1HdlXUvGnkG7c6IMIQY5BGkFAIRDJz+55/4OS5Q5UW/sWSlSvMXR17nAhHQIxBhuDfO2zPx4T0YJ7R8anh9g9ONFda+BeLli0x1m2v4eEFs8dCmCD38V7qDVhs+61DA61iYeGixbBI7hIMPpwduTIpeqd8nstjE+Jgf4tYUW6iinITtb21AwaCGINs4x484NnbeoTv6thzFNbIDW+XiGhkbEKcvf99wHvN7/FO+T3eS72BTdxq2sStJr5xKwylJzHO9gaBGzN3VQ2Xsl1ePTfwro49zvYPThgWP/u0IdtluTw2Iaqx5R9dw86RsQkxnzrn5ajnvTFz1xcOL1SUmyjyX6B/CkKhEKwAAABZBhN4AAAAMQYAAAAxBgAAiDEAAACIMQAAQIwBAABAjAEAAGIMAAAAYgwAABBjAAAAEGMAAIAYAwAAgBgDAADEGAAAAMQYAAAgxgAAACDGAAAAMQYAAAAxBgAAiDEAAACIMQAAQIwBAABAjAEAAGIMAAAAYgwAABBjAAAAEGMAAIAYAwAAgBgDAADEGAAAAMQ4zQycPCcQUSh8Sf/XFWXrdhtGx6fE8DMEgw8De1uP2FG7ADDSV0IyfH1lUgyFQoQrRDXb3jXL2Uj6vm6ew/H+cT76GW7euuuL9fvdhz91hOTJSHm31XVwch8ulUt37SjW80jfR1/TcV/R6oJnnADblmq7mu+n0zsfHZ8SIy81b2ub9cnyFi1bUtzAd1tRywAk7iu2+k4unZ+7EKZPjhsz/+7L6NDJVGyuKDdVR35vZGxCTPW+N2/d8aE2AUjM/bkHgXTeH55xAnpPnJWND7vPj7v09ByDrmFn9Pdmbt/zuwcPeFDLAGS/r0CMEzDiFnxCz6n2mdv3/OFKEXpOtY+4BV15lIOnLziHzlw8Fgw+nCUimrw+fbXt/eM8ahgANvoKwhQK4Bu3OojIQURUtGwJ8Y1bdfcM3ku9ASKyh/9fsnIF9QnNqFwAGOkrGRVjW30nV/ZSsXnxs08bIr9/eWxC9E75PZIRUv6M5c8vNa4oWmokIpqeueObuOb3ZHM4brHtNz/7zFOGqrWlHBHR7P3vA95rfo9WzwyUUWnhjWWmYvPPTMXmyHoY7G8RU63f0peKzZloc9HPECZdn1m2brehcm0pF/l5WvTXSgtvrFxbwoVtptW9Ky288YWi54yROnN5bEK8P/cgwHxILt1L216uaTJ+8vkF59zcg0AoAZ98fsGZzFKf0qoGQ/fhTx3xPuPmrbu++qYua/hvmlt67F9fmRQjr8h7yv083u8n+9wT1/ye5pYeu9w9Ij9L7j43b931JSpb/8duId4z9H/sFrRa2hbLZpF2T9fStppt75qjPze8/DD8s1h1MDf3IKB2yZzaNpfq0rbmlh77xDW/J1Efunnrrs/x/nG+tKrBoOS+0TYLt8XSqgbDJ59fcMb7rP6P3YLSzwlf9U1dViXP8cnnF5wv1zQZld5XiX3m5h4E4pU52b4SCoXoT1+Nu0IKCN9H7tnSKsaO94/zSkQ4lUreVtfBqfkMqYHFEhslYpRQmOqbuqxqn/vrK5OizDOnwqPOluhztRDjWGKTbFtSK8Zyv7+troOr2fauWWldhNuGkrXn0rpTxW0uWTF+uabJmKgOY4myQqF/wr6lVQ0Gpc83cc3vUdJXS6saDEoFK1I8YzkqkfdVa59Y9022ryj521jtItJ2aRPjRG9VLSpZ8jpCyYh9usQ41iYRpc+sRzF+uabJGMtzV+s5aSnGoVDIGgqFVL0UE3nIasQ9ClGtGKfwWY9IJGYyf+KIVdZkRCosmEq84WSeIRkRjGX7TItxtM6lRYwldz5l4pUjlgCk2DlSFuN4lRIOK6hoeMyLcayONjf3IJDKLkWNxFh1B5mbexCI9QIprWowpCqOSsVYg/at1PtO2WaJPkOtR6x0x6vUV+K27XgefvSuumyIcWSb1nwCz1bfyQ32tzTF+ZVjRCQSkY+IDETESTOXi6N/saLcVC30nHJIqxkeY9+//NpRWLhocYzP8BORQEThgD1HRFYiWhXxO9XxnuNyxIaKyrWlXPSGi1iTByNu4Ynfm7w+fbXuzS7riFvwFS1bQkREe1uP2Ls69hyN/t3fzO/+cUq23BD+fvvbrwslK1dElp+Gzlw8JrcmkohosL+FiIj+6Bp2hjeHbNtSbS9atqRYy/puf+fJchER/ev7x3kGJkwe1UUw+HB25Mqk6J3yecpMRvMmbvUWuT8oLFy0uGbjGmu4DqKfNU6bm5X+Roxoc1xUm1OM8PtGZ4L2HflZZql9y7bRgUP7XGXrdhsVToo9do/R8anhkbEJcXnRUqNlwxprrDJJu9aemAht4LutfULzljha4JT6qVF6Dl7OZu1vvy5I9nzEq6+stcbQoA2D/S1iRbnpUb8c+HCvK7qdFi1bUmyx7TeH22kqfeX+3IPA6PjUcNzJ0JeKzXL2a/jnV3kicmjuGcd5QwRCoVAsT8kQCoV8Sj0VKfgdC490P7nPcaj1dNV4ibG8uVgeYpwRhCK7qp10krtHKp5xLM8k3kRHhj3jmCGvl2uajLGGzpIn94RXHKfdBEKhUKzJJrtajzLes4RCoXhxbXsS4ZeYNotut/Em9WLlbogTnuDVaoGSsEKsuH8szYg3ea51xCBe3HxbXQenqWcsvWVieZD2CE81moD0ZhejPWQ5T8Wysdwa4z5XpbdnLA/AIXnkRzPpns3el99GefCjIcf9ue8DMuuamV8mJtX1E3YcHZ8arttew7NSzpnb9/y1uzq4aK9wxC34Ki28dcQtfBv9N8uff874hLe15Zf2OB4xJ7UrOcLtVnGb273jv/Nx2nc82zqlsuyM/sG2+VwqDqVlCI/kotfflq3bzVeuKeWivUY5L1JqI6tieMSCWi2I5X1HcnNGfnv/iFvwNfDdr0UvCcxkOgDvpd5ApYXn5UZlg/0tnKaecRxvild4D06JpxLH+1a6FMaTDs841uTd11cmRTXLdFj3jGPFTlOZsEuXZ5zIRnHaktK4p9KlmE4VsVY5fHFGfNGXqGKEpmhkoKRtRN9fLvuZhJLnEJKJ8c7NPQgks5QyE55xgtGCQ1PPuFLa1BDHO0iEKMXDHnvLVq4p4R73XJYaY3gNSt9yrmRjefFwDx7wzNy+54/2EirKTdUjbuHbYPDhrPea30M0n+RneuaOb2RsUtTb1uqho62iTOxrtr7poJW1TSyXxybEeCONkbEJUcl8gJy3LLVVpRtGnHIea4w5l1htVqltBbn4sdSPEsbxvVM+zyZudcyf/3XKL3uPZ595yvBYjLTEaI5hMyUjpyfsHd2v3F+OuaLrrrBw0eI+ofmz8FzN/bkHgRu37vhuztzxXR6bEFPd4JOIBr7b+jNTsTmshXJx4pKVK2T/NhM78K6qaERhQd4ZbeBEQyIVQpxWDn405JCbmAs/R7jxRDaiyevTVw9+9KmjT2h2MS/EZy46azevl3uRBW7M5G4GOLlJygy3OTUiIiuW0Ttfk0UutCbHC/JOUzERtWlRjsHTF5z73qiNOZEfrrNwX+Mbt7YFgw9n+z4+K/SeOCto6Tg08N3W9rdfF/qE5qQnyDORKEjtAyfbwD0sdNqujj3OgZPnDqnt6H1C82dDZy46y9btNhDD1G5eH8u7KxZ+/1sn5ReZbHOBDPQhXeG91Buorevgwgl9lFBYuGgx37i1bfTchz6Lbb9Zi3IMnDwn9AnNn6W6UimXsrZxrBSkbnsNb6vv3JBoqYuc0LW/87rAspGFnlPtQs+p9snr01ejf7aJW70lz45yMhLIKu7BA56KmjeNkVnWlIry0ECrWGnhU6pDW30nV7e9pilOVOAQEbVHXf5shSnUvn0Siurk9emrMsNGYxrLpH4INR+b4iITopSZjOZnn3nKsPz5pcZYb9Hazet3Wmz7BVaTmoTXfFts+11DA0/Gjn/39uuCxbbfk2t5kuXmAjIsxmYVoQomHBO5ZOyj41PDFeUmTcsXmWXNVt/JVa0t5Z595mlDmbRyItacQGHhosX7/uXXDorI0KaWOCtfmin2ihGOoubFNPeMvfKB/cUqGoeBZCYeoj3Mm7fuyg3Diml+SYySz8hYYx1xC76ujj1OvnGrYxO32lpRbuKKli0xVlr4F2OFMyzzS/mY90gOfjTkkGvg3Z2NzIdb1BJjCdQqFYJsTaEPkUrBkP2syxqcDKNOD3xPPEvZS8VpdYQG+1tEvnGro257DV9RbuIk4S9o4LtfC+ckf6yvbUitr8XYPOSPI8Qx0dQzvjw2IcZw2Z3Smz2Q4BZirAYa3k1DRHT5z14xhhGcktB64gixSDK7/bRA7oysWOkApRUU/OT1aS7G5NDjvy8z619mMpqzKVBtb+0QvhC/4aLromTlilX73qh1kLJZc10QZ9WFi+KvbQ97tYrE1HupNxBj5LdKsmeiTs4RUZNKoU8L0kqWtuiXtbQrzxXvb8OrEiK/Nz1zx9fVscdJ9GOqzGhPPNaIrE9odu1tPWKInlyPs8sxFVwJfl6ddjHuE5pdweDDWZkHLJZEMF6jdVKM5Wa9J84KddtrfvTKzo+72t7a0R3DCxdjCHJYiFelq/F1d/7WGT2UHTpz8Vi8jpjKuVqbuNVbIrdzZiVs8d5h++i5D33RdV63vaapge8W9bBCRNFI4PwVV7SwRIikEKeOzWodgEHXsDNG++6W+o8zzmfJ2nvozMVjmV52ONjfIsqFd9rffl0oW7dbjFUeaXnfZ9HfjxxJ/sb6S3t0fQSDD2fjbftO9xl2USMTXu0ISTZMIXkAIRXXj4L88dlYb+5VUqO0xmhAO2M1ouh1uCNuwSeJHMUQ5L9IYuyQLhcRfZdOISYimrj2pOdRu3n9zlgnMLd/cIKX87Zm7z+5dCjW2s6hgVZx4OQ5Qeg55Yi8MjYUvdQbqGs6KPt8QmejM9UJEpbCMnEmZHdKbcwc9fK3JzMSGzx9wRlnMuqo1KaNaj6r78RZIRt26zvxb098btGyJcV/GvqDR26yt4Hvtg4c2ueSt8uPeVjkQi6FhYsWx1rRU7Zut0HKb/EYcqELNcSop2KSD4VyFG/PhUbJp5TuR2clg1YgHTvw4mWRmrjm93Qf/tQRvuLZSG63XhLPm/bcFErybMikBc3oDrxEOX3VPGcq6VFjtbtY5Us2PWwSuUJU71pUa+tEehBxIEJM5HYFxsrIdvPWXd8nn19whvtavEMeYtlGaV+Jkyo4IO265KWcOIky1znSIsap5i9VmoIxyXyvgTgJVVLusKmk0kvUcRSm9cyKGMfrdGq3bbMqxkrSNqptd/HKl8JnJUyck0kxTjUvcyynLNUXVjxnT2lfSfIFLacRjgXpGrrW7urg5NaiKmHm9j1/bV0HlygW6h484Kmt6+CUDjUmr09ftdj2c0LPKaPC4YZq6t48aE32uYfOXDwWL8kO37jVoXbtciZpbumxy9mRb9zaJje5qUe6OvY497Ye2aV2KNvAd9tt9Z2+ZD4r2bY5cPLcodrN6+3ZtpnafiqnBXJxYGlSblcyZQoGH87Guq/aZ1NThmDw4WylhbdnLEwR/XZXeoRL+CwytclmSqsaDI73j/OxPLObt+76Iu8rN6SOlwQkGS8x0flo0eVTcCKD2vPQMu4Zx0sOE88L0ZNnHIo6cy9R3UaexRfraKhEnxU+T1FpZ/z6yqSo4izJtHvGkf1UzcETSo9f21bXwakZkUYfd6RFoqD6pi5rIp2LShj2hGdcsK2uI2WPRUnyjQa+21q1tpQrMz25ztA75ff8dcrnOXf+iivVN1XZut2GyM+4MXPXFz0BOHP7ni96hjfeYnS5ZTRqnjsycUjkzK53yudJJXlJ5LNWRd1fLiF/+JRqJcuBUnnmWF6wmlN/o+sxXn3G+/1En5nKc4Ztatm4xhpdv94pv8d9fswVeR+5MqqxSaWFN1o2llvLSozm6LwP4fbkPn/FpWZ1jVxdxbJxqraO/PuajWusVb8o5aKf48atO77Lf54Qk9ECi22/uXJNCSdnH7Uao6avRNuzam0pt7xoqfGF55caw0mKousl2u43Zu76CkKhEOUT7R+c4OWWDQk9p9rlBAwAADLBgnx6WKHnlCPG+k1yn7/iQnMAAGQL3XvGe1uP2H9jrbaHhwOywyKT0Vy5poSLtdsmHfvlAQBADQv1/gAripYaK8pN1UoShMeibf7wTLQGAEDWWJDvBtjbemRXrmUYAwDAM9YNk9enrza39NghxAAAiHGGmbl9zz9yZUJ0f3nF1Sc0uxCaAACwQs4sbau08MYRt2CU+5mtvpPSfRAhAACkwv8fAIvzOgYikRrNAAAAAElFTkSuQmCC" alt="POS IND Logo" class="pos-logo-img">
+            </div>
+          </div>
+
+          <div class="header-title-box">
+            <h2 id="dash-title-text">DASHBOARD CAPAIAN KINERJA SLA INCOMING</h2>
+            <h3 id="dash-kcu-name">KCU BOGOR 16000</h3>
+          </div>
+
+          <div class="header-right-box">
+            <i class="far fa-calendar-alt" style="font-size: 1.5rem; color: #ff9800;"></i>
+            <div class="header-date-text" id="dash-date-text">
+              11 SEPTEMBER 2026<br>PKL 19.47 WIB
+            </div>
+          </div>
+        </header>
+
+        <!-- TOP ROW: SLA ALL PRODUCT vs SLA COD SHOPEE -->
+        <div class="dash-top-grid">
+          
+          <!-- Card 1: SLA ALL PRODUCT -->
+          <div class="sla-card">
+            <div class="sla-card-header all-product">
+              <div><i class="fas fa-chart-line"></i> SLA ALL PRODUCT</div>
+              <div class="header-badge" id="badge-target-all">TARGET 90%</div>
+            </div>
+            <div class="sla-card-body">
+              <!-- Gauge -->
+              <div class="gauge-box">
+                <div class="gauge-title">SLA PROSEN INCOMING</div>
+                <div class="gauge-value green" id="val-sla-all">91.81%</div>
+                <div class="gauge-canvas-wrap">
+                  <canvas id="gauge-sla-all" width="160" height="95"></canvas>
+                </div>
+                <div class="gauge-legend-mini">
+                  <span class="legend-item" id="legend-all-red"><span class="dot red"></span> &lt; 80%</span>
+                  <span class="legend-item" id="legend-all-yellow"><span class="dot yellow"></span> 80%-89%</span>
+                  <span class="legend-item" id="legend-all-green"><span class="dot green"></span> &ge; 90%</span>
+                </div>
+              </div>
+
+              <!-- Rekap Metrics -->
+              <div class="rekap-box">
+                <div class="rekap-title green-bg">REKAP KIRIMAN ALL PRODUCT</div>
+                <div class="rekap-grid">
+                  <div class="metric-card">
+                    <div class="metric-icon total"><i class="fas fa-box"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">TOTAL KIRIMAN</span>
+                      <span class="metric-num" id="metric-all-total">14,158</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon ongo"><i class="fas fa-truck"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES ON GO</span>
+                      <span class="metric-num" id="metric-all-ongo">9,084</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon duedate"><i class="far fa-clock"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES DUE DATE</span>
+                      <span class="metric-num" id="metric-all-duedate">330</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon delivered"><i class="fas fa-check-circle"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">DELIVERED DONE</span>
+                      <span class="metric-num" id="metric-all-delivered">4,391</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon oversla"><i class="fas fa-hourglass-end"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES OVERSLA</span>
+                      <span class="metric-num" id="metric-all-oversla">216</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon deloversla"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">DELIVERED OVERSLA</span>
+                      <span class="metric-num" id="metric-all-deloversla">137</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ranking List -->
+              <div class="ranking-box">
+                <div class="ranking-header">RANKING PERFORMA KANTOR (ALL PRODUCT)</div>
+                <div id="ranking-list-all" class="ranking-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: SLA COD SHOPEE -->
+          <div class="sla-card">
+            <div class="sla-card-header cod-shopee">
+              <div><i class="fas fa-shopping-bag"></i> SLA COD SHOPEE</div>
+              <div class="header-badge" id="badge-target-shopee">TARGET 95%</div>
+            </div>
+            <div class="sla-card-body">
+              <!-- Gauge -->
+              <div class="gauge-box">
+                <div class="gauge-title">SLA PROSEN INCOMING</div>
+                <div class="gauge-value green" id="val-sla-shopee">91.05%</div>
+                <div class="gauge-canvas-wrap">
+                  <canvas id="gauge-sla-shopee" width="160" height="95"></canvas>
+                </div>
+                <div class="gauge-legend-mini">
+                  <span class="legend-item" id="legend-shopee-red"><span class="dot red"></span> &lt; 85%</span>
+                  <span class="legend-item" id="legend-shopee-yellow"><span class="dot yellow"></span> 85%-94%</span>
+                  <span class="legend-item" id="legend-shopee-green"><span class="dot green"></span> &ge; 95%</span>
+                </div>
+              </div>
+
+              <!-- Rekap Metrics -->
+              <div class="rekap-box">
+                <div class="rekap-title orange-bg">REKAP KIRIMAN COD SHOPEE</div>
+                <div class="rekap-grid">
+                  <div class="metric-card">
+                    <div class="metric-icon total"><i class="fas fa-box"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">TOTAL KIRIMAN</span>
+                      <span class="metric-num" id="metric-shopee-total">1,664</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon ongo"><i class="fas fa-truck"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES ON GO</span>
+                      <span class="metric-num" id="metric-shopee-ongo">944</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon duedate"><i class="far fa-clock"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES DUE DATE</span>
+                      <span class="metric-num" id="metric-shopee-duedate">18</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon delivered"><i class="fas fa-check-circle"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">DELIVERED DONE</span>
+                      <span class="metric-num" id="metric-shopee-delivered">648</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon oversla"><i class="fas fa-hourglass-end"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">INPROSES OVERSLA</span>
+                      <span class="metric-num" id="metric-shopee-oversla">35</span>
+                    </div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-icon deloversla"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="metric-info">
+                      <span class="metric-label">DELIVERED OVERSLA</span>
+                      <span class="metric-num" id="metric-shopee-deloversla">19</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ranking List -->
+              <div class="ranking-box">
+                <div class="ranking-header cod">RANKING PERFORMA KANTOR (COD SHOPEE)</div>
+                <div id="ranking-list-shopee" class="ranking-list"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MIDDLE ROW: 4 PANELS -->
+        <div class="dash-middle-grid">
+          
+          <!-- Panel 1: Table Per Produk -->
+          <div class="panel-card">
+            <div class="panel-title">INCOMING KC SLA BARU PER PRODUK</div>
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>PRODUK</th>
+                  <th>TRX</th>
+                  <th>% SLA</th>
+                  <th style="text-align: center;">STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="products-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Panel 2: Volume Distribution Donut Chart -->
+          <div class="panel-card">
+            <div class="panel-title">DISTRIBUSI VOLUME PER PRODUK</div>
+            <div class="donut-container">
+              <div class="donut-wrap">
+                <canvas id="donut-canvas" width="140" height="140"></canvas>
+                <div class="donut-center-text">
+                  <div class="donut-center-title">TOTAL</div>
+                  <div class="donut-center-num" id="donut-total-num">14,158</div>
+                  <div class="donut-center-title">TRX</div>
+                </div>
+              </div>
+              <div id="donut-legend-container" class="donut-legend"></div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Regional Performance Summary -->
+          <div class="panel-card">
+            <div class="panel-title">RINGKASAN PERFORMA PER WILAYAH</div>
+            <div id="regional-table-container"></div>
+          </div>
+
+          <!-- Panel 4: Status Legend & Graphic -->
+          <div class="panel-card">
+            <div class="panel-title">KETERANGAN STATUS</div>
+            <div class="status-legend-box">
+              <div class="status-item" id="status-legend-green">
+                <span class="dot green"></span> &ge; 90% <span class="status-desc">(Sangat Baik)</span>
+              </div>
+              <div class="status-item" id="status-legend-yellow">
+                <span class="dot yellow"></span> 80% - 89% <span class="status-desc">(Perlu Perbaikan)</span>
+              </div>
+              <div class="status-item" id="status-legend-red">
+                <span class="dot red"></span> &lt; 80% <span class="status-desc">(Perlu Tindakan)</span>
+              </div>
+              <div class="status-item">
+                <span class="dot gray"></span> - / N/A <span class="status-desc">(Tidak Tersedia)</span>
+              </div>
+            </div>
+
+            <div class="illustration-box">
+              <!-- Pos Indonesia Truck & Checklist Illustration -->
+              <svg width="170" height="100" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Delivery Truck -->
+                <rect x="10" y="45" width="80" height="45" rx="4" fill="#003366"/>
+                <rect x="90" y="55" width="30" height="35" rx="3" fill="#ff6600"/>
+                <path d="M90 55 L108 55 L120 70 L120 90 L90 90 Z" fill="#ff6600"/>
+                <rect x="94" y="60" width="14" height="12" rx="2" fill="#e2e8f0"/>
+                <circle cx="35" cy="90" r="12" fill="#1e293b"/>
+                <circle cx="35" cy="90" r="5" fill="#e2e8f0"/>
+                <circle cx="100" cy="90" r="12" fill="#1e293b"/>
+                <circle cx="100" cy="90" r="5" fill="#e2e8f0"/>
+                <text x="20" y="70" fill="white" font-size="12" font-weight="bold" font-family="sans-serif">POS IND</text>
+
+                <!-- Parcel Boxes -->
+                <rect x="140" y="65" width="22" height="22" rx="2" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
+                <rect x="155" y="75" width="20" height="20" rx="2" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
+                <rect x="132" y="78" width="18" height="18" rx="2" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/>
+
+                <!-- Clipboard Checklist -->
+                <rect x="148" y="15" width="34" height="45" rx="3" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+                <rect x="157" y="10" width="16" height="8" rx="2" fill="#475569"/>
+                <circle cx="155" cy="26" r="3" fill="#16a34a"/>
+                <line x1="162" y1="26" x2="175" y2="26" stroke="#16a34a" stroke-width="2"/>
+                <circle cx="155" cy="35" r="3" fill="#16a34a"/>
+                <line x1="162" y1="35" x2="175" y2="35" stroke="#16a34a" stroke-width="2"/>
+                <circle cx="155" cy="44" r="3" fill="#16a34a"/>
+                <line x1="162" y1="44" x2="175" y2="44" stroke="#16a34a" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM ROW: INSIGHT HARI INI -->
+        <div class="dash-bottom-panel">
+          <div class="insight-sidebar">
+            <i class="fas fa-search" style="font-size: 1.6rem; color: #ff9800;"></i>
+            <div class="insight-sidebar-title">INSIGHT<br>HARI INI</div>
+          </div>
+          <div class="insight-cards-grid">
+            
+            <div class="insight-card">
+              <div class="insight-icon primary"><i class="fas fa-chart-line"></i></div>
+              <div class="insight-body">
+                <h4>PERFORMA UTAMA</h4>
+                <ul id="insight-list-utama"></ul>
+              </div>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-icon best"><i class="fas fa-trophy"></i></div>
+              <div class="insight-body">
+                <h4>PERFORMA TERBAIK</h4>
+                <ul id="insight-list-terbaik"></ul>
+              </div>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="insight-body">
+                <h4>PERLU PERHATIAN</h4>
+                <ul id="insight-list-perhatian"></ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Dashboard Footer -->
+        <footer class="dash-footer">
+          <div id="footer-update-text">Catatan : Data update per 11 September 2026 Pukul 19.47 WIB</div>
+          <div id="footer-source-text">Sumber : System Monitoring Incoming KCU BOGOR 16000</div>
+        </footer>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal Preview Hasil Export Image -->
+  <div id="export-preview-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fas fa-check-circle" style="color: #22c55e;"></i> Gambar Laporan Berhasil Dibuat!</h3>
+        <button id="btn-close-modal" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 12px;">
+          Jika unduhan otomatis terblokir browser, Anda dapat klik tombol di bawah atau <strong>Klik Kanan pada Gambar &gt; Simpan Gambar Sebagai...</strong>
+        </p>
+        <div class="modal-img-container">
+          <img id="modal-preview-img" src="" alt="Hasil Laporan Dashboard">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="btn-modal-download" href="#" download="Dashboard_SLA_Incoming.png" class="btn btn-success">
+          <i class="fas fa-download"></i> Unduh Gambar (PNG)
+        </a>
+        <a id="btn-modal-open-tab" href="#" target="_blank" class="btn btn-secondary">
+          <i class="fas fa-external-link-alt"></i> Buka Gambar di Tab Baru
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Scripts -->
+  <script src="js/parser.js"></script>
+  <script src="js/chart-utils.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
